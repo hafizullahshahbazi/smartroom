@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Room — Real-Time Translation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0a0b10;
+            --card: rgba(22, 24, 33, 0.72);
+            --card-border: rgba(139, 92, 246, 0.15);
+            --text: #e8eaf0;
+            --text-muted: #8b8fa3;
+            --primary: #8b5cf6;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 40px 20px;
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 15% -10%, rgba(139, 92, 246, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 85% 110%, rgba(6, 182, 212, 0.14) 0%, transparent 45%);
+            background-attachment: fixed;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+        .hero-emoji {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 24px rgba(139, 92, 246, 0.6));
+        }
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 12px;
+            line-height: 1.1;
+        }
+        .subtitle {
+            font-size: 17px;
+            color: var(--text-muted);
+            margin-bottom: 48px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        .lang-badges {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+        .lang-badge {
+            padding: 8px 16px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #c4b5fd;
+        }
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        @media (max-width: 700px) { .actions { grid-template-columns: 1fr; } }
+        .action-card {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 36px 24px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: block;
+        }
+        .action-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.3);
+        }
+        .action-card .icon {
+            font-size: 44px;
+            display: block;
+            margin-bottom: 16px;
+        }
+        .action-card h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        .action-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .footer {
+            margin-top: 60px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .footer a {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+        .footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="hero-emoji">🎙️</span>
+        <h1>Smart Room</h1>
+        <p class="subtitle">
+            Real-time multilingual translation for meetings, lectures, and group conversations.
+            Speak in your language — everyone hears it in theirs.
+        </p>
+
+        <div class="lang-badges">
+            <span class="lang-badge">🇬🇧 English</span>
+            <span class="lang-badge">🇮🇷 Persian</span>
+            <span class="lang-badge">🇷🇺 Russian</span>
+            <span class="lang-badge">🇨🇳 Chinese</span>
+            <span class="lang-badge">🇪🇸 Spanish</span>
+        </div>
+
+        <div class="actions">
+            <a class="action-card" href="/host">
+                <span class="icon">🎙️</span>
+                <h2>Host a Room</h2>
+                <p>Create a new room, choose your language, and start speaking.</p>
+            </a>
+            <a class="action-card" href="/join">
+                <span class="icon">🎧</span>
+                <h2>Join a Room</h2>
+                <p>Enter a room code and listen in your preferred language.</p>
+            </a>
+        </div>
+
+        <p class="footer">
+            SmartRoom — Interactive Real-Time Room Translation System
+        </p>
+    </div>
+</body>
+</html>

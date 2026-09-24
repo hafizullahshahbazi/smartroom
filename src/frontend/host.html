@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Room — Host</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0a0b10;
+            --bg-gradient-1: rgba(139, 92, 246, 0.18);
+            --bg-gradient-2: rgba(6, 182, 212, 0.14);
+            --card: rgba(22, 24, 33, 0.72);
+            --card-border: rgba(139, 92, 246, 0.15);
+            --text: #e8eaf0;
+            --text-muted: #8b8fa3;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --success: #10b981;
+            --danger: #ef4444;
+            --input-bg: rgba(255,255,255,0.04);
+            --input-border: rgba(255,255,255,0.1);
+            --chat-mine: rgba(139, 92, 246, 0.15);
+            --chat-other: rgba(255,255,255,0.04);
+        }
+        body.light {
+            --bg: #f5f7fb;
+            --bg-gradient-1: rgba(139, 92, 246, 0.08);
+            --bg-gradient-2: rgba(6, 182, 212, 0.06);
+            --card: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(139, 92, 246, 0.12);
+            --text: #1a1d2a;
+            --text-muted: #64748b;
+            --input-bg: rgba(0,0,0,0.03);
+            --input-border: rgba(0,0,0,0.1);
+            --chat-mine: rgba(139, 92, 246, 0.12);
+            --chat-other: rgba(0,0,0,0.03);
+        }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 24px 16px 40px;
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 15% -10%, var(--bg-gradient-1) 0%, transparent 45%),
+                radial-gradient(circle at 85% 110%, var(--bg-gradient-2) 0%, transparent 45%);
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.5;
+            max-width: 1400px;
+            margin: 0 auto;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1 .emoji { font-size: 30px; filter: drop-shadow(0 0 14px rgba(139, 92, 246, 0.55)); }
+        .top-bar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+        .theme-btn {
+            padding: 8px 14px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            transition: all 0.15s;
+            backdrop-filter: blur(20px);
+        }
+        .theme-btn:hover { transform: translateY(-1px); border-color: var(--primary); }
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.15);
+        }
+        .label-muted {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+        .room-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 10px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        .btn {
+            padding: 10px 18px;
+            font-size: 13px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5); }
+        .btn-secondary { background: var(--input-bg); border: 1px solid var(--input-border); }
+        .btn-secondary:hover { border-color: var(--primary); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .meta b {
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            margin-left: 4px;
+        }
+        .mic-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .mic-btn {
+            padding: 12px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mic-btn-on {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+        }
+        .mic-btn-off {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+        }
+        .mic-btn:hover { transform: translateY(-1px); }
+        .audience-item {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(139, 92, 246, 0.1);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 3px 3px 3px 0;
+        }
+        body.light .audience-item { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+        .workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } }
+        .panel {
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.15);
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--input-border);
+        }
+        .panel-title { font-weight: 700; font-size: 15px; }
+        .panel-body { flex: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 12px; }
+        .panel-body::-webkit-scrollbar { width: 6px; }
+        .panel-body::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 3px; }
+        .transcript {
+            background: rgba(139, 92, 246, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-left: 3px solid var(--primary);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 10px;
+            animation: fadeIn 0.4s ease-out;
+        }
+        body.light .transcript { background: rgba(139, 92, 246, 0.06); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .transcript .ts { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; display: flex; gap: 8px; align-items: center; }
+        .transcript .speaker { display: inline-block; padding: 2px 8px; background: var(--input-bg); border-radius: 10px; font-size: 10px; color: var(--text-muted); }
+        .transcript .orig { font-size: 15px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed var(--input-border); }
+        .transcript .trans { font-size: 13px; margin-top: 6px; display: flex; gap: 8px; align-items: baseline; }
+        .lang-tag {
+            display: inline-block;
+            min-width: 36px;
+            padding: 2px 8px;
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            border-radius: 5px;
+            font-size: 10px;
+            font-weight: 700;
+            text-align: center;
+            flex-shrink: 0;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+        .lang-tag.fa { background: rgba(245, 158, 11, 0.15); color: #d97706; border-color: rgba(245, 158, 11, 0.3); }
+        .lang-tag.en { background: rgba(16, 185, 129, 0.15); color: #059669; border-color: rgba(16, 185, 129, 0.3); }
+        .lang-tag.ru { background: rgba(59, 130, 246, 0.15); color: #2563eb; border-color: rgba(59, 130, 246, 0.3); }
+        .lang-tag.zh { background: rgba(239, 68, 68, 0.15); color: #dc2626; border-color: rgba(239, 68, 68, 0.3); }
+        .lang-tag.es { background: rgba(245, 158, 11, 0.15); color: #d97706; border-color: rgba(245, 158, 11, 0.3); }
+        .chat-msg {
+            margin: 10px 0;
+            padding: 10px 14px;
+            background: var(--chat-other);
+            border-radius: 14px;
+            border: 1px solid var(--input-border);
+            animation: fadeIn 0.3s ease-out;
+            max-width: 85%;
+        }
+        .chat-msg.mine {
+            background: var(--chat-mine);
+            border-color: rgba(139, 92, 246, 0.3);
+            margin-left: auto;
+        }
+        .chat-msg .sender {
+            font-size: 12px;
+            font-weight: 700;
+            color: #a78bfa;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .chat-msg .sender .time {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 400;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .chat-msg .text { font-size: 14px; color: var(--text); line-height: 1.5; word-wrap: break-word; }
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid var(--input-border);
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            font-size: 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: inherit;
+        }
+        .chat-input::placeholder { color: var(--text-muted); }
+        .chat-input:focus { outline: none; border-color: var(--primary); }
+        .talk-btn-inline {
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .talk-btn-inline:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4); }
+        .talk-btn-inline.recording {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 4px 24px rgba(239, 68, 68, 0.5);
+            animation: talkPulse 1.2s infinite;
+        }
+        @keyframes talkPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.75; } }
+        .talk-btn-inline:disabled { background: var(--input-bg); color: var(--text-muted); cursor: not-allowed; box-shadow: none; animation: none; }
+        .send-btn {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .send-btn:hover { transform: translateY(-1px); }
+        .empty { color: var(--text-muted); text-align: center; padding: 30px 16px; font-size: 13px; }
+        .empty-icon { font-size: 32px; display: block; margin-bottom: 8px; opacity: 0.6; }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 11, 16, 0.92);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .modal p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+        .lang-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+        .lang-option {
+            padding: 14px 18px;
+            background: var(--input-bg);
+            border: 2px solid var(--input-border);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            font-family: inherit;
+            text-align: left;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .lang-option:hover { background: rgba(139, 92, 246, 0.08); border-color: rgba(139, 92, 246, 0.3); }
+        .lang-option.selected {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+        .lang-option .flag { font-size: 22px; }
+        .modal .btn-primary { width: 100%; padding: 14px; font-size: 15px; justify-content: center; }
+        .modal .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+    </div>
+
+    <div class="modal-overlay" id="langModal">
+        <div class="modal">
+            <h2>🎙️ Smart Room — Host</h2>
+            <p>Select the language you'll be speaking in:</p>
+            <div class="lang-options">
+                <button class="lang-option" data-lang="en" onclick="selectLang('en', this)">
+                    <span class="flag">🇬🇧</span> English
+                </button>
+                <button class="lang-option" data-lang="fa" onclick="selectLang('fa', this)">
+                    <span class="flag">🇮🇷</span> Persian (Farsi)
+                </button>
+                <button class="lang-option" data-lang="ru" onclick="selectLang('ru', this)">
+                    <span class="flag">🇷🇺</span> Russian
+                </button>
+                <button class="lang-option" data-lang="zh" onclick="selectLang('zh', this)">
+                    <span class="flag">🇨🇳</span> Chinese
+                </button>
+                <button class="lang-option" data-lang="es" onclick="selectLang('es', this)">
+                    <span class="flag">🇪🇸</span> Spanish
+                </button>
+            </div>
+            <button class="btn btn-primary" id="createBtn" onclick="createRoom()" disabled>
+                Create Room →
+            </button>
+        </div>
+    </div>
+
+    <div id="mainPage" class="hidden">
+        <h1><span class="emoji">🎙️</span>Smart Room — Host</h1>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="card">
+                <div class="label-muted">Room Code</div>
+                <div class="room-code" id="roomCode">----</div>
+                <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="copyCode()">📋 Copy Code</button>
+                    <button class="btn btn-secondary" onclick="copyLink()">🔗 Copy Audience Link</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="meta">
+                    <div>⏱ Duration<b id="duration">00:00:00</b></div>
+                    <div>👥 Audiences<b id="audienceCount">0</b></div>
+                    <div>📝 Sentences<b id="entryCount">0</b></div>
+                    <div>🗣️ Your Lang<b id="hostLangDisplay">—</b></div>
+                </div>
+                <div class="mic-controls">
+                    <button class="mic-btn mic-btn-off" id="micBtn" onclick="toggleMic()">🎙️ Enable Microphone</button>
+                    <span class="status" id="status" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--input-bg); border: 1px solid var(--input-border); font-family: 'JetBrains Mono', monospace;">Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 14px;">
+            <div class="panel-title" style="margin-bottom: 10px;">👥 Audiences in Room</div>
+            <div id="audienceList"><span class="empty" style="padding: 8px;">No audiences yet</span></div>
+        </div>
+
+        <div class="workspace" style="margin-top: 14px;">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">📝 Live Transcript</div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="downloadHistory('txt')">📥 TXT</button>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="downloadHistory('json')">📥 JSON</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="log">
+                    <div class="empty"><span class="empty-icon">📝</span>No transcripts yet</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">💬 Chat</div>
+                </div>
+                <div class="panel-body" id="chatLog">
+                    <div class="empty"><span class="empty-icon">💬</span>No messages yet</div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Type a message...">
+                    <button class="talk-btn-inline" id="talkBtn">🎤 Hold</button>
+                    <button class="send-btn" onclick="sendChat()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ THEME ============
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light');
+                document.getElementById('themeBtn').textContent = '☀️ Light';
+            } else {
+                document.body.classList.remove('light');
+                document.getElementById('themeBtn').textContent = '🌙 Dark';
+            }
+        }
+        function toggleTheme() {
+            const current = localStorage.getItem('theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', next);
+            applyTheme(next);
+        }
+        applyTheme(localStorage.getItem('theme') || 'dark');
+
+        // ============ STATE ============
+        let ws = null;
+        let hostLang = null;
+        let roomCode = null;
+        let selectedLang = null;
+        let startTime = null;
+        let durationTimer = null;
+        let micStream = null;
+        let mediaRecorder = null;
+        let audioContext = null;
+        let analyser = null;
+        let isRecording = false;
+        let audioChunks = [];
+        let silenceStart = null;
+        let chunkStartTime = null;
+        let vadCheckInterval = null;
+        const VAD_THRESHOLD = 0.015;
+        const SILENCE_DURATION = 900;
+        const MAX_CHUNK_DURATION = 7000;
+
+        let talkMicStream = null;
+        let talkMediaRecorder = null;
+        let talkChunks = [];
+        let isTalking = false;
+
+        const LANG_LABELS = { ru: 'RU', en: 'EN', fa: 'FA', zh: 'ZH', es: 'ES' };
+        const LANG_NAMES = { ru: 'Russian', en: 'English', fa: 'Persian', zh: 'Chinese', es: 'Spanish' };
+
+        // ============ LANGUAGE SELECTION ============
+        function selectLang(lang, btn) {
+            selectedLang = lang;
+            document.querySelectorAll('.lang-option').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('createBtn').disabled = false;
+        }
+
+        async function createRoom() {
+            if (!selectedLang) return;
+            const res = await fetch('/api/rooms', { method: 'POST' });
+            const data = await res.json();
+            window.location.href = `/host?code=${data.code}&lang=${selectedLang}`;
+        }
+
+        // ============ INIT ============
+        function init() {
+            const params = new URLSearchParams(window.location.search);
+            const codeFromUrl = params.get('code');
+            const langFromUrl = params.get('lang');
+
+            if (codeFromUrl && langFromUrl && LANG_NAMES[langFromUrl]) {
+                roomCode = codeFromUrl;
+                hostLang = langFromUrl;
+
+                document.getElementById('langModal').classList.add('hidden');
+                document.getElementById('mainPage').classList.remove('hidden');
+                document.getElementById('roomCode').textContent = roomCode;
+                document.getElementById('hostLangDisplay').textContent = LANG_NAMES[hostLang];
+
+                connectWebSocket();
+                startDurationTimer();
+
+                document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') sendChat();
+                });
+
+                const talkBtn = document.getElementById('talkBtn');
+                talkBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startTalking(); });
+                talkBtn.addEventListener('mouseup', (e) => { e.preventDefault(); stopTalking(); });
+                talkBtn.addEventListener('mouseleave', () => { if (isTalking) stopTalking(); });
+                talkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startTalking(); }, { passive: false });
+                talkBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopTalking(); }, { passive: false });
+            }
+        }
+
+        // ============ LIVE MIC (ALWAYS-ON) ============
+        async function toggleMic() {
+            if (isRecording) await stopMic();
+            else await startMic();
+        }
+
+        async function startMic() {
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true }
+                });
+                audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(micStream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512;
+                source.connect(analyser);
+                isRecording = true;
+                document.getElementById('micBtn').textContent = '🔇 Disable Microphone';
+                document.getElementById('micBtn').className = 'mic-btn mic-btn-on';
+                setStatus('🎙️ Listening...');
+                startVADLoop();
+            } catch (err) {
+                alert('Cannot access microphone: ' + err.message);
+            }
+        }
+
+        async function stopMic() {
+            isRecording = false;
+            if (vadCheckInterval) clearInterval(vadCheckInterval);
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+            if (audioContext) { audioContext.close(); audioContext = null; }
+            document.getElementById('micBtn').textContent = '🎙️ Enable Microphone';
+            document.getElementById('micBtn').className = 'mic-btn mic-btn-off';
+            setStatus('Ready');
+            if (audioChunks.length > 0) await sendChunk();
+        }
+
+        function startVADLoop() {
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            vadCheckInterval = setInterval(() => {
+                if (!isRecording || !analyser) return;
+                analyser.getByteTimeDomainData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const v = (dataArray[i] - 128) / 128;
+                    sum += v * v;
+                }
+                const rms = Math.sqrt(sum / dataArray.length);
+                const now = Date.now();
+                if (rms > VAD_THRESHOLD) {
+                    if (!chunkStartTime) { chunkStartTime = now; startRecording(); }
+                    silenceStart = null;
+                    if (now - chunkStartTime > MAX_CHUNK_DURATION) finishAndSendChunk();
+                } else {
+                    if (chunkStartTime && !silenceStart) silenceStart = now;
+                    else if (silenceStart && (now - silenceStart) > SILENCE_DURATION) finishAndSendChunk();
+                }
+            }, 50);
+        }
+
+        function startRecording() {
+            const options = { mimeType: 'audio/webm;codecs=opus' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) options.mimeType = 'audio/webm';
+            mediaRecorder = new MediaRecorder(micStream, options);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.start(100);
+        }
+
+        async function finishAndSendChunk() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+            const mr = mediaRecorder;
+            await new Promise(resolve => { mr.onstop = resolve; mr.stop(); });
+            chunkStartTime = null;
+            silenceStart = null;
+            if (audioChunks.length > 0) await sendChunk();
+            if (isRecording) audioChunks = [];
+        }
+
+        async function sendChunk() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const arrayBuffer = await blob.arrayBuffer();
+            setStatus('⏳ Processing...');
+            ws.send(arrayBuffer);
+        }
+
+        function setStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        // ============ PUSH-TO-TALK ============
+        async function startTalking() {
+            if (isTalking) return;
+            try {
+                talkMicStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true }
+                });
+                const options = { mimeType: 'audio/webm;codecs=opus' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) options.mimeType = 'audio/webm';
+                talkMediaRecorder = new MediaRecorder(talkMicStream, options);
+                talkChunks = [];
+                talkMediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) talkChunks.push(e.data); };
+                talkMediaRecorder.start(100);
+                isTalking = true;
+                const btn = document.getElementById('talkBtn');
+                btn.textContent = '🔴 Release';
+                btn.classList.add('recording');
+            } catch (err) {
+                alert('Cannot access microphone: ' + err.message);
+            }
+        }
+
+        async function stopTalking() {
+            if (!isTalking) return;
+            isTalking = false;
+            const btn = document.getElementById('talkBtn');
+            btn.textContent = '⏳ Sending';
+            btn.disabled = true;
+            btn.classList.remove('recording');
+
+            if (talkMediaRecorder && talkMediaRecorder.state !== 'inactive') {
+                await new Promise(resolve => { talkMediaRecorder.onstop = resolve; talkMediaRecorder.stop(); });
+            }
+            if (talkMicStream) { talkMicStream.getTracks().forEach(t => t.stop()); talkMicStream = null; }
+            if (talkChunks.length > 0 && ws && ws.readyState === WebSocket.OPEN) {
+                // Signal to backend: next audio is HOLD (chat only)
+                ws.send(JSON.stringify({ type: "hold_audio_start" }));
+                const blob = new Blob(talkChunks, { type: 'audio/webm' });
+                const arrayBuffer = await blob.arrayBuffer();
+                ws.send(arrayBuffer);
+            }
+            talkChunks = [];
+            talkMediaRecorder = null;
+            setTimeout(() => {
+                btn.textContent = '🎤 Hold';
+                btn.disabled = false;
+            }, 500);
+        }
+
+        // ============ WEBSOCKET ============
+        function connectWebSocket() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${proto}//${window.location.host}/ws/host/${roomCode}?lang=${hostLang}`);
+            ws.onopen = () => console.log('WS connected');
+            ws.onmessage = (event) => handleMessage(JSON.parse(event.data));
+            ws.onclose = (event) => {
+                if (event.code === 4004 || event.code === 1008) return;
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        function handleMessage(msg) {
+            switch (msg.type) {
+                case 'connected':
+                    if (msg.chat_history && msg.chat_history.length > 0) {
+                        msg.chat_history.forEach(m => renderChatMessage(m, m.sender_name === 'Host'));
+                    }
+                    break;
+                case 'processed':
+                    addTranscript(msg.original_text, msg.translations, msg.speaker || 'host');
+                    break;
+                case 'audience_joined':
+                case 'audience_left':
+                    document.getElementById('audienceCount').textContent = msg.total_audiences;
+                    refreshAudienceList();
+                    break;
+                case 'chat':
+                    renderChatMessage(msg, msg.is_mine);
+                    break;
+                case 'pong': break;
+            }
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ type: 'chat', text: text }));
+            input.value = '';
+        }
+
+        function renderChatMessage(msg, isMine) {
+            const chatLog = document.getElementById('chatLog');
+            if (chatLog.querySelector('.empty')) chatLog.innerHTML = '';
+            const div = document.createElement('div');
+            div.className = 'chat-msg' + (isMine ? ' mine' : '');
+            const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const rtl = ['fa', 'ps', 'ar', 'he'].includes(msg.sender_lang);
+            const dir = rtl ? 'rtl' : 'ltr';
+            div.innerHTML = `
+                <div class="sender">
+                    <span>${escapeHtml(msg.sender_name)}</span>
+                    <span class="time">${time}</span>
+                </div>
+                <div class="text" dir="${dir}">${escapeHtml(msg.translated_text || msg.original_text)}</div>
+            `;
+            chatLog.appendChild(div);
+            chatLog.scrollTop = chatLog.scrollHeight;
+            while (chatLog.children.length > 200) chatLog.removeChild(chatLog.firstChild);
+        }
+
+        function addTranscript(original, translations, speaker = 'host') {
+            const log = document.getElementById('log');
+            if (log.querySelector('.empty')) log.innerHTML = '';
+            const div = document.createElement('div');
+            div.className = 'transcript';
+            const ts = new Date().toLocaleTimeString('en-US');
+            const speakerLabel = speaker === 'host' ? '🎙️ Host' : `👤 ${escapeHtml(speaker)}`;
+            let transHtml = '';
+            for (const [lang, text] of Object.entries(translations)) {
+                if (!text) continue;
+                const label = LANG_LABELS[lang] || lang.toUpperCase();
+                transHtml += `<div class="trans"><span class="lang-tag ${lang}">${label}</span><span>${escapeHtml(text)}</span></div>`;
+            }
+            div.innerHTML = `
+                <div class="ts">${ts}<span class="speaker">${speakerLabel}</span></div>
+                <div class="orig">${escapeHtml(original)}</div>
+                ${transHtml}
+            `;
+            log.insertBefore(div, log.firstChild);
+            const count = document.getElementById('entryCount');
+            count.textContent = parseInt(count.textContent || '0') + 1;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function refreshAudienceList() {
+            try {
+                const res = await fetch(`/api/rooms/${roomCode}`);
+                const data = await res.json();
+                const list = document.getElementById('audienceList');
+                if (data.audiences.length === 0) {
+                    list.innerHTML = '<span class="empty" style="padding: 8px;">No audiences yet</span>';
+                } else {
+                    list.innerHTML = data.audiences.map(a => {
+                        const langName = LANG_NAMES[a.lang] || a.lang.toUpperCase();
+                        return `<span class="audience-item">${escapeHtml(a.name)} · ${langName}</span>`;
+                    }).join('');
+                }
+                document.getElementById('audienceCount').textContent = data.total_audiences;
+            } catch (e) { console.error(e); }
+        }
+
+        function startDurationTimer() {
+            startTime = Date.now();
+            durationTimer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+                const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+                const s = String(elapsed % 60).padStart(2, '0');
+                document.getElementById('duration').textContent = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(roomCode);
+            alert('Room code copied: ' + roomCode);
+        }
+
+        function copyLink() {
+            const link = `${window.location.origin}/join?code=${roomCode}`;
+            navigator.clipboard.writeText(link);
+            alert('Audience link copied:\n' + link);
+        }
+
+        function downloadHistory(format) {
+            window.open(`/api/rooms/${roomCode}/export?format=${format}`, '_blank');
+        }
+
+        init();
+    </script>
+</body>
+</html>

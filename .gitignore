@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.venv/
+.env
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== PROJECT-SPECIFIC =====
+# Model cache (large files!)
+models/
+
+# Audio recordings
+audio/
+*.mkv
+*.wav
+*.mp3
+*.webm
+*.ogg
+
+# Runtime outputs
+output/
+src/output/
+*.log
+
+# HuggingFace cache
+hf_cache/
+.cache/
+
+# Docker volumes
+*.pid

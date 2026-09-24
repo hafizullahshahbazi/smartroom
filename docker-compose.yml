@@ -1,0 +1,34 @@
+
+
+services:
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: smartroom-whisper
+    ports:
+      - "9000:9000"
+    environment:
+      - ASR_MODEL=tiny
+      - ASR_ENGINE=openai_whisper
+      - ASR_DEVICE=cpu
+    volumes:
+      - whisper_cache:/root/.cache
+    restart: unless-stopped
+
+  backend:
+    build: ./src/backend
+    container_name: smartroom-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/frontend:/app/frontend
+      - hf_cache:/root/.cache/huggingface
+    environment:
+      - WHISPER_URL=http://whisper:9000/asr
+      - HF_HOME=/root/.cache/huggingface
+    depends_on:
+      - whisper
+    restart: unless-stopped
+
+volumes:
+  hf_cache:
+  whisper_cache:
