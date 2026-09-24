@@ -6,13 +6,9 @@
 
 *Break language barriers. Speak your language. Everyone hears theirs — instantly.*
 
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docker.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Working-success)]()
+**Status:** ✅ Working &nbsp;•&nbsp; **License:** MIT &nbsp;•&nbsp; **Python:** 3.11 &nbsp;•&nbsp; **Docker:** Ready
 
-[Features](#-features) • [Demo](#-demo) • [Tech Stack](#-tech-stack) • [Installation](#-installation) • [Team](#-team)
+[Features](#-features) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack) • [Installation](#-installation) • [Team](#-team)
 
 </div>
 
@@ -42,19 +38,26 @@ Built to solve a real problem: in multilingual meetings, lectures, and group cal
 
 ---
 
-## 📸 Demo
-
-### Host — Choose your language
-![Host Landing](docs/screenshots/host-landing.png)
-
-### Host — Live conversation
-![Host Dashboard](docs/screenshots/host-dashboard.png)
-
-### Audience — Join and receive translations
-![Audience Join](docs/screenshots/audience-join.png)
-
-> 📷 *Add your own screenshots to `docs/screenshots/` and they'll show up here.*
-
----
-
 ## 🏗️ Architecture
+```text
+┌──────────────────┐        WebSocket        ┌──────────────────────┐
+│                  │◄───────────────────────►│                      │
+│  Frontend        │                         │  FastAPI Backend     │
+│  (HTML/CSS/JS)   │◄───────────────────────►│  - WebSocket Server  │
+│                  │                         │  - Room Manager      │
+│  • MediaRecorder │                         │  • Chat / Transcript │
+│  • Web Audio API │                         │                      │
+│  • WebSocket     │                         └──────────┬───────────┘
+└──────────────────┘                                    │
+                                                        │
+                                    ┌───────────────────▼────────────────────┐
+                                    │      ML Pipeline (pipeline.py)         │
+                                    ├────────────────────────────────────────┤
+                                    │  1. Whisper (STT)          → Text      │
+                                    │  2. NLLB-200 (CTranslate2) → Translate │
+                                    │  3. Edge-TTS               → Audio     │
+                                    └────────────────────────────────────────┘
+    ```
+
+
+
