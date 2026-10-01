@@ -1,3 +1,7 @@
+# Doxygen output (regenerate with `doxygen Doxyfile`)
+docs/html/
+docs/rtf/
+docs/latex/
 # Python
 __pycache__/
 *.py[cod]

@@ -1,3 +1,46 @@
+##
+# @mainpage SmartRoom — Interactive Real-Time Room Translation System
+#
+# @section intro Introduction
+# SmartRoom is a web-based platform that enables people speaking different
+# native languages to communicate in real time inside shared virtual rooms.
+# Participants speak or type in their own language, and every other
+# participant sees and hears the message in their own language.
+#
+# @section features Features
+# - **5 languages supported:** English, Persian, Russian, Chinese, Spanish
+# - **Live microphone mode** with continuous speech recognition
+# - **Push-to-talk** for voice messages as chat bubbles
+# - **Real-time text chat** with automatic multilingual translation
+# - **Voice-to-voice translation** using neural TTS
+# - **Dark / Light theme** toggle
+# - **Transcript export** in TXT and JSON formats
+#
+# @section architecture Architecture
+# The system consists of three layers:
+# - **Frontend:** HTML, CSS, JavaScript (WebSocket + MediaRecorder)
+# - **Backend:** FastAPI (REST + WebSocket server)
+# - **ML Pipeline:** Whisper (STT) → NLLB-200 (Translation) → Edge-TTS (Voice)
+#
+# @section techstack Technology Stack
+# - Python 3.11, FastAPI, WebSocket, Uvicorn
+# - OpenAI Whisper, Meta NLLB-200 via CTranslate2
+# - Microsoft Edge-TTS (5 neural voices)
+# - Docker, Docker Compose
+#
+# @section team Development Team
+# Built by an 8-person team as part of Laboratory Work 1 and 2 in
+# Software Engineering (ТРПО).
+#
+# @section links Related Pages
+# - @ref Entity (base class)
+# - @ref Audience (derived class)
+# - @ref Room (session class)
+# - @ref RoomManager (manager class)
+#
+# @author Hafizullah Shahbazi
+# @date 2026-10-01
+# @version 1.0.0
 """
 @file pipeline.py
 @brief SmartRoom ML pipeline — Whisper, NLLB-200, Edge-TTS integration
