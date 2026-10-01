@@ -1,3 +1,18 @@
+"""
+@file main.py
+@brief SmartRoom FastAPI backend — REST API and WebSocket server
+@details Provides:
+         - REST endpoints for room creation, info, and export
+         - WebSocket endpoints for hosts and audiences
+         - Audio/chat pipeline orchestration
+         - Static HTML serving for frontend pages
+@author Hafizullah Shahbazi
+@date 2026-09-24
+@version 1.0.0
+@copyright MIT License
+@see pipeline.py
+@see rooms.py
+"""
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,42 +35,59 @@ app.add_middleware(
 )
 
 FRONTEND_DIR = "/app/frontend"
-
-
+##
+# @brief Read and return the content of an HTML file from FRONTEND_DIR
+# @details Used to serve frontend pages (index.html, host.html, join.html)
+#          without a separate static file server.
+# @param filename Name of the HTML file (e.g., "host.html")
+# @return File content as a string, or an error message if not found
 def serve_html(filename: str) -> str:
     path = os.path.join(FRONTEND_DIR, filename)
     if not os.path.exists(path):
         return f"<h1>File {filename} not found</h1>"
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
-
-
+##
+# @brief Landing page
+# @return Rendered index.html
 @app.get("/", response_class=HTMLResponse)
 async def index():
     return serve_html("index.html")
 
-
+##
+# @brief Host dashboard page
+# @return Rendered host.html
 @app.get("/host", response_class=HTMLResponse)
 async def host_page():
     return serve_html("host.html")
 
-
+##
+# @brief Audience join page
+# @return Rendered join.html
 @app.get("/join", response_class=HTMLResponse)
 async def join_page():
     return serve_html("join.html")
 
-
+##
+# @brief Health check endpoint
+# @return {"status": "ok"}
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
-
+##
+# @brief Create a new room
+# @return JSON with room code and creation timestamp
 @app.post("/api/rooms")
 async def create_room():
     room = manager.create_room()
     return {"code": room.code, "created_at": room.created_at.isoformat()}
 
-
+##
+# @brief Get info about an existing room
+# @param code The 4-character room code
+# @return Room metadata (audiences, entries, host status)
+# @throw HTTPException 404 if room not found
 @app.get("/api/rooms/{code}")
 async def get_room_info(code: str):
     room = manager.get_room(code)
@@ -63,7 +95,11 @@ async def get_room_info(code: str):
         raise HTTPException(status_code=404, detail="Room not found")
     return room.get_info()
 
-
+##
+# @brief Get transcript history in a specific language
+# @param code Room code
+# @param lang Target language code (default: "en")
+# @return List of transcript entries
 @app.get("/api/rooms/{code}/history")
 async def get_room_history(code: str, lang: str = "en"):
     room = manager.get_room(code)
@@ -71,7 +107,11 @@ async def get_room_history(code: str, lang: str = "en"):
         raise HTTPException(status_code=404, detail="Room not found")
     return {"code": code, "lang": lang, "history": room.get_history_for_audience(lang)}
 
-
+##
+# @brief Export full room history (transcript + chat)
+# @param code Room code
+# @param format "txt" (default) or "json"
+# @return Downloadable file content
 @app.get("/api/rooms/{code}/export")
 async def export_room_history(code: str, format: str = "txt"):
     room = manager.get_room(code)
@@ -111,6 +151,12 @@ async def export_room_history(code: str, format: str = "txt"):
 
 
 # ============ WEBSOCKET: HOST ============
+##
+# @brief WebSocket handler for the host
+# @details Receives audio and control messages from the host and
+#          routes them to process_and_broadcast() or process_hold_audio().
+# @param websocket WebSocket connection
+# @param code Room code
 @app.websocket("/ws/host/{code}")
 async def ws_host(websocket: WebSocket, code: str):
     room = manager.get_room(code)
@@ -179,7 +225,12 @@ async def ws_host(websocket: WebSocket, code: str):
     finally:
         room.host_ws = None
 
-
+##
+# @brief Process host LIVE MIC audio → transcript only
+# @details Runs Whisper + NLLB, adds a transcript entry, and
+#          broadcasts translations + TTS to all audiences.
+# @param room The Room object
+# @param audio_bytes Raw audio data
 async def process_and_broadcast(room: Room, audio_bytes: bytes):
     """Process host LIVE mic audio → TRANSCRIPT ONLY (no chat bubble)."""
     try:
@@ -245,7 +296,12 @@ async def process_and_broadcast(room: Room, audio_bytes: bytes):
         print(f"[Live] ERROR: {e}")
         traceback.print_exc()
 
-
+##
+# @brief Process host HOLD audio → chat only
+# @details Runs Whisper + NLLB, adds a chat message with a 🎤 prefix,
+#          and broadcasts to all audiences (no transcript entry).
+# @param room The Room object
+# @param audio_bytes Raw audio data
 async def process_hold_audio(room: Room, audio_bytes: bytes):
     """Process host HOLD audio → CHAT ONLY (no transcript entry)."""
     try:
@@ -307,7 +363,15 @@ async def process_hold_audio(room: Room, audio_bytes: bytes):
         print(f"[Hold] ERROR: {e}")
         traceback.print_exc()
 
-
+##
+# @brief Process audience audio → chat only
+# @details Runs Whisper + NLLB, adds a chat message with a 🎤 prefix,
+#          broadcasts to all audiences and the host.
+# @param room The Room object
+# @param audio_bytes Raw audio data
+# @param sender_ws WebSocket of the sender
+# @param sender_name Sender display name
+# @param sender_lang Sender's language
 async def process_audience_audio(room: Room, audio_bytes: bytes, sender_ws, sender_name: str, sender_lang: str):
     """Process audio from an audience member → CHAT ONLY."""
     try:
@@ -368,7 +432,12 @@ async def process_audience_audio(room: Room, audio_bytes: bytes, sender_ws, send
         print(f"[Audience-Hold] ERROR: {e}")
         traceback.print_exc()
 
-
+##
+# @brief Generate TTS audio and send to a specific audience
+# @param ws Target WebSocket
+# @param text Text to synthesize
+# @param lang Target language code
+# @param name Recipient name (for logging)
 async def generate_and_send_audio(ws: WebSocket, text: str, lang: str, name: str):
     """Generate TTS audio and send to a specific audience."""
     try:
@@ -392,6 +461,15 @@ async def generate_and_send_audio(ws: WebSocket, text: str, lang: str, name: str
 
 
 # ============ CHAT MESSAGE HANDLER (TEXT) ============
+##
+# @brief Process a text chat message
+# @details Translates the text into all target languages, stores it
+#          in chat history, and broadcasts to host + audiences.
+# @param room The Room object
+# @param text Message text
+# @param sender_name Sender display name
+# @param sender_lang Sender's language
+# @param is_host True if the sender is the host
 async def process_chat_message(room: Room, text: str, sender_name: str, sender_lang: str, is_host: bool = False):
     """Process a TEXT chat message: translate, store, broadcast."""
     if not text.strip():
@@ -467,6 +545,12 @@ async def process_chat_message(room: Room, text: str, sender_name: str, sender_l
 
 
 # ============ WEBSOCKET: AUDIENCE ============
+##
+# @brief WebSocket handler for an audience member
+# @details Registers the audience, sends chat + transcript history,
+#          and routes incoming audio or chat to the appropriate handler.
+# @param websocket WebSocket connection
+# @param code Room code
 @app.websocket("/ws/audience/{code}")
 async def ws_audience(websocket: WebSocket, code: str):
     room = manager.get_room(code)
@@ -556,7 +640,11 @@ async def ws_audience(websocket: WebSocket, code: str):
             except Exception:
                 pass
 
-
+##
+# @brief Testing endpoint — upload an audio file for transcription
+# @param audio Uploaded audio file
+# @param source_lang Source language code (default: "ru")
+# @return Transcription + translations (used for manual testing)
 @app.post("/transcribe")
 async def transcribe(
     audio: UploadFile = File(...),
